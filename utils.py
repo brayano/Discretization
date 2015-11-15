@@ -24,10 +24,33 @@ def form_O(x,ncuts):
 	for i in range(n):
 		O[i,cats[i]-1] = 1
 	return O
-# form_o linear comes in as a flag to disc_one 
 
-#np.random.seed([117])
-#x = np.random.normal(1,5,200)
-#y = 2*x**2-4*x-10+np.random.normal(0,1,200)
+def form_O_linear(x,ncuts):
+	segs = np.linspace(min(x),max(x),ncuts)
+	cats = np.digitize(x, bins=segs)
+	t = x-segs[cats-1]
+	delta = segs[1]
+	n = x.size
+	O = np.zeros((n, ncuts))
+	for i in range(n):
+		index = cats[i] - 1
+		O[i,index] = t[i]/delta 
+		if index+1 < ncuts:
+			O[i,index+1] = (delta-t[i])/delta
+	return O
+	
 
-#print disc_one(x,y,tune=10,ncuts=10)
+def linterp(x,segs,theta):
+	# x needs to be ordered: increasing.
+	cats = np.digitize(x, bins=segs)
+	t = x-segs[cats-1]
+	delta = segs[1]
+	shifttheta = np.delete(x,[0])
+	shifttheta = np.append(x,0)
+	len = x.size
+	lin_fits = np.zeros(len)
+	for i in range(len):
+		lin_fits[i] = (t[i]*theta[cats[i]-1]+(delta-t[i])*shifttheta[cats[i]-1])/delta
+	return lin_fits
+	
+	
