@@ -4,17 +4,14 @@ import scipy as scipy
 import cvxopt as cvxopt
 import utils
  
-def disc_one(x,y,ncuts,k=1,lnorm=1,tune=50,constant=True):
+def disc_one(x,y,ncuts,k=1,lnorm=1,tune=50,constant=True,eps=0.01):
 	n = x.size
 	# Create D-matrix: specify n and k
-	segs = np.linspace(min(x),max(x),ncuts)
+	segs = np.linspace(min(x)-eps,max(x)+eps,ncuts)
 	D = utils.form_Dk(n=ncuts,k=k)
 
 	# Create O-matrix: specify x and number of desired cuts
-	if constant == True:
-		O = utils.form_O(x,ncuts)
-	if constant != True:
-		O = utils.form_O_linear(x,ncuts)
+	O = utils.Omatrix(x,ncuts,constant=constant,eps=eps)
 	
 	# Solve convex problem.
 	theta = cvx.Variable(ncuts)
@@ -28,33 +25,9 @@ def disc_one(x,y,ncuts,k=1,lnorm=1,tune=50,constant=True):
 	# Check for error.
 	if prob.status != cvx.OPTIMAL:
 		raise Exception("Solver did not converge!")
+	if constant==True: return [segs, np.array(theta.value)]
+	if constant==False: return [x, O.dot(np.array(theta.value))] 
 	
-	return [segs, np.array(theta.value)]
-	
-	
-def flasso(x,y,tune):
-	n = x.size
-	order = np.argsort(x)
-	x = np.array(x)[order]
-	y = np.array(y)[order]
-	
-	# Create D-matrix
-	D = utils.form_Dk(n=n,k=1)
-	
-	# Solve convex problem.
-	theta = cvx.Variable(n)
-	obj = cvx.Minimize(0.5 * cvx.sum_squares(y - theta)
-                   + tune * cvx.norm(D*theta, 1) )
-	prob = cvx.Problem(obj)
-	# Use CVXOPT as the solver
-	prob.solve(solver=cvx.CVXOPT,verbose=False)
-
-	print 'Solver status: ', prob.status
-	# Check for error.
-	if prob.status != cvx.OPTIMAL:
-		raise Exception("Solver did not converge!")
-		
-	return [x,theta.value]
 
 #np.random.seed([117])
 #x = np.random.normal(1,5,200)
