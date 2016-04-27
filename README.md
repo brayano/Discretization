@@ -1,1 +1,2 @@
-# Discretization
+# Coarse Regression Splines
+
