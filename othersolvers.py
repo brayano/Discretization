@@ -81,16 +81,16 @@ def knots(x,k):
 		
 
 def tpb(x,t,k):
-	G1 = np.zeros((x.size,k))
+	G1 = np.zeros((x.size,k+1))
 	for i in range(x.size):
-		for j in range(k):
-			G1[i,j] = x[i]^j
+		for j in range(k+1):
+			G1[i,j] = x[i]**j
 	
 	G2 = np.zeros((x.size,x.size-k-1))
 	for i in range(x.size):
 		for j in range(x.size-k-1):
 			indic = [1 if x[i]>t[j] else 0]
-			G2[i,j] = indic*(x[i]-t[j])^k
+			G2[i,j] = indic*np.array((x[i]-t[j])**k)
 			
 	G = np.concatenate((G1,G2),axis=1)
 	return G
@@ -153,3 +153,10 @@ def lars(x,y,ftrue=None,k=1,ntune=100,tuners=None,eps=0.01,cvx_solver=0):
 	output = {'minmse.fits':fits[lowestMSE],'minmse':MSEs[lowestMSE],'minmse.lam': tuners[lowestMSE]}
 	return output
 
+#np.random.seed([117])
+#x = np.random.normal(1,2,100)
+#y = 2*x**2-4*x-10+np.random.normal(0,1,100)
+#ytrue = 2*x**2-4*x-10
+#test = lars(x,y)
+# Not optimized, takes a while to run
+#print np.mean(test['minmse.fits']['fitted'])
