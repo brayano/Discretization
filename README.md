@@ -1,10 +1,6 @@
 # Meshy Optimization
 
-We consider the statistical problem where we measure a response $y_i$, and a covariate $x_i\in[0,1]$, on each of $i=1,\ldots,n$ observations. We assume a generative model of the form
-	\[
-	y_i = f_0 \left(x_i \right) + w_i
-	\]
-where $f_0$ is an unknown function from a known function class $\mathcal{F}$, and $w_i$ are iid errors with $\operatorname{E}\left[w_i\right] = 0$ and $\operatorname{var}{w_i} = \sigma^2 < \infty$. We are interested in estimating $f_0$ based on the observed data. One common approach for estimating $f$ is to use penalized regression:
+We consider the statistical problem where we measure a response $$y_i$$, and a covariate $x_i\in[0,1]$, on each of $i=1,\ldots,n$ observations. We assume a generative model of the form $$y_i = f_0 \left(x_i \right) + w_i$$, where $$f_0$$ is an unknown function from a known function class $$\mathcal{F}$$, and $w_i$ are iid errors with $\operatorname{E}\left[w_i\right] = 0$ and $\operatorname{var}{w_i} = \sigma^2 < \infty$. We are interested in estimating $f_0$ based on the observed data. One common approach for estimating $f$ is to use penalized regression:
 	\begin{equation}\label{eq:pen}
 	\hat{f} = \operatorname{argmin}_{f\in\mathcal{F}}\frac{1}{n}\sum_{i=1}^n\left(y_i - f\left(x_{i,\cdot}\right)\right)^2 + \lambda_n P\left(f\right),
 	\end{equation}
