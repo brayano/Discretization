@@ -50,7 +50,7 @@ def linear3(x1,x2,mesh1,mesh2):
 		if zero_element.size == 0:
 			near3ind = dists[i,].argsort()[:3]
 			total_dist = np.sum(dists[i,near3ind])
-			O[i,near3ind] = dists[i,near3ind]/total_dist
+			O[i,near3ind] = 1-dists[i,near3ind]/total_dist
 		else:
 			O[i,zero_element] = 1.0
 	return O
