@@ -1,8 +1,4 @@
 import numpy as np
-import cvxpy as cvx
-import scipy as scipy
-import cvxopt as cvxopt
-import matplotlib.pyplot as plt
 
 def form_D1(n):
 	D = np.zeros((n-1,n))
@@ -106,20 +102,31 @@ def designBPP(x, k):
 	return G
 
 def interpBPP(data,mesh,k):
-	inds = np.digitize(x,mesh)-1
+	inds = np.digitize(data,mesh)-1
 	psitilde = designBPP(x=data,k=k)
 	O = np.zeros((data.size,mesh.size))
 	for i in range(data.size):
-		Psi = designBPP(x=mesh[np.arange(inds[i],inds[i]+k+1)],k=k)
 		if inds[i] >= mesh.size-1-k:
+			Psi = designBPP(x=mesh[np.arange(mesh.size-1-k,mesh.size)],k=k)
 			O[i,(mesh.size-1-k):(mesh.size)] = psitilde[i,].dot(np.linalg.inv(Psi))
 		else:
+			Psi = designBPP(x=mesh[np.arange(inds[i],inds[i]+k+1)],k=k)
 			O[i,inds[i]:(inds[i]+k+1)] =  psitilde[i,].dot(np.linalg.inv(Psi))
+	return O
+
+def interpO(data,mesh,k,key):
+	# key=0: NS, key=1: BPP
+	if key == 0:
+		O = interpNS(data,mesh,k)
+	elif key == 1:
+		O = interpBPP(data,mesh,k)
+	else:
+		raise Exception("Not a solver key! Only Key=0 (NS),1 (BPP)")
 	return O
 
 
 #d = np.linspace(0,1,10)
-#x = np.random.sample(5)
+#x = np.random.sample(40)
 #print x
 #Psi = designNS(x=d,mesh=d,k=3)
 #psitilde = designNS(x=x,mesh=d,k=3)
@@ -128,4 +135,12 @@ def interpBPP(data,mesh,k):
 #print d[np.arange(1,2)]
 #print designBPP(x,k=1)[1,].dot(np.linalg.inv(Psi))
 #print interpNS(data=x,mesh=d,k=0)
-#print interpBPP(data=x,mesh=d,k=0)
+#print interpBPP(data=x,mesh=d,k=2)
+#interpO(data=x,mesh=d,k=1,key=2)
+
+#np.random.seed([117])
+#x = np.random.normal(0,2,40)
+#def wsin(x):
+#	return 3*np.sin(3*x)
+#y = wsin(x)+np.random.normal(0,1,40)
+#print interpBPP(data=x,mesh=np.linspace(min(x)-.01,max(x)+.01,10),k=2)

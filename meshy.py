@@ -16,7 +16,8 @@ def meshy_one(x,y,m,k=1,interp=1,mesh=None,lnorm=1,tune=50,eps=0.01,cvx_solver=0
 	# Create D-matrix: specify n and k
 	if mesh==None:
 		mesh = np.linspace(min(x)-eps,max(x)+eps,m)
-	D = utils.form_Dk(n=m,k=k)
+	delta = np.diff(mesh)[0]
+	D = utils.form_Dk(n=m,k=k)*(delta**(1/lnorm-k))
 
 	# Create O-matrix: specify x and number of desired cuts
 	O = utils.interpO(data=x,mesh=mesh,k=k,key=interp)
