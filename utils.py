@@ -1,4 +1,10 @@
 import numpy as np
+from scipy.linalg import block_diag
+from scipy.sparse import coo_matrix, csc_matrix, vstack, linalg as sla
+import cvxopt as cvxopt
+import math
+import itertools
+from operator import add, sub
 
 def form_D1(n):
 	D = np.zeros((n-1,n))
@@ -9,7 +15,7 @@ def form_D1(n):
 
 def form_Dk(n,k):
 	D = np.identity(n)
-	for i in range(k):
+	for i in range(k+1):
 		D = form_D1(n-i).dot(D)
 	return D
 
@@ -124,7 +130,69 @@ def interpO(data,mesh,k,key):
 		raise Exception("Not a solver key! Only Key=0 (NS),1 (BPP)")
 	return O
 
+# Penalty Approximations
 
+def form_D_fvec_ft(m,k):
+	# Let a cardinal difference vector, c, denote the relevant rth order difference vector
+	# i.e. for 1st order difference, c= (1,-1). For 2nd order difference, c = (1,-2,1). Let theta= (theta_1, theta_2, ..., theta_c) denote relevant thetas for a difference segment. 
+	n=k+2
+	c = form_Dk(n,k).reshape((1,n)) # cardinal difference vector
+	co = (k+1)*m+1 # In an (mxm)-array, if we index them sequentially row-wise, then the column wise first order differences are m-indices different. For second order differences column wise, theta_2 is m-away from theta_1, theta_3 is m-away from theta_2. Hence, we need a cardinal open vector (covec) with 2*m+1 many elements. 
+	covec = np.zeros((1,co))
+	for i in range(n):
+		covec[0,i*m] = c[0,i]
+	# m(m-k-1) is the number of unique rows we need to define all differences. 
+	step = np.zeros((m*(m-k-1),m**2))
+	for i in range(m*(m-k-1)):
+		step[i,i:(co+i)] = covec
+	return step
+
+def form_D_fvec_f(m,k):
+	# This function returns Difference matrix for vectorized f when 
+	# attempting D
+	n=k+2
+	blocks = []
+	D = form_Dk(m,k)
+	for i in range(m):
+		blocks.append(D)
+	return block_diag( *blocks)
+	
+def form_D_fvec_cross(m,k1,k2):
+	# k1>=k2
+	n1=k1+2
+	n2=k2+2
+	c1 = form_Dk(n1,k1).reshape((1,n1))
+	c2 = form_Dk(n2,k2).reshape((1,n2))
+	myn = n1*n2+(n2-1)*(m-k1-2)
+	covec = np.zeros((1,myn))
+	#print myn
+	for i in range(n2):
+		#print i*(n1+m-k1-2),i*(n1+m-k1-2)+n1
+		#covec[0,i*(n2+m-k1-2+1-k2):i*(n2+m-k1-2+1-k2)+n1] = c2[0,i]*c1
+		covec[0,i*(n1+m-k1-2):i*(n1+m-k1-2)+n1] = c2[0,i]*c1
+	step = np.zeros((m**2-myn+1,m**2))
+	for i in range(m**2-myn+1):
+		#print i
+		step[i,i:(myn+i)] = covec
+	return step
+
+def form_D_fvec(m,delta1,delta2,k1=[0],k2=[0]):
+	s = len(k1)
+	for i in range(s):
+		D1 = form_D_fvec_f(m=m,k=k1[i])*(delta1**(1-k1[i])) # removing -1 from exponent
+		D2 = form_D_fvec_ft(m=m,k=k2[i])*(delta2**(1-k2[i]))
+		D3 = form_D_fvec_cross(m=m,k1=k1[i],k2=k2[i])*(delta1**(1-k1[i]))*(delta2**(1-k2[i]))
+	#print D1.shape, D2.shape, D3.shape
+	#D = np.concatenate((D1,D2,D3),axis=0)
+	#D = vstack([D1,D2,D3])	
+	D = csc_matrix(vstack([D1,D2,D3]).toarray())
+	#return cvxopt.spdiag([D])
+	#print type(D)
+	return D
+
+
+
+#print form_D_fvec(m=5)
 #d = np.linspace(0,1,10)
 #x = np.random.sample(40)
 #print x
@@ -144,3 +212,21 @@ def interpO(data,mesh,k,key):
 #	return 3*np.sin(3*x)
 #y = wsin(x)+np.random.normal(0,1,40)
 #print interpBPP(data=x,mesh=np.linspace(min(x)-.01,max(x)+.01,10),k=2)
+
+#d = np.linspace(0,2,10)
+#x = np.linspace(0,2,1000)
+#theta = wsin(d)
+#eps = 0.1
+
+#ns_fit = interpNS(data=x,mesh=d,k=2).dot(theta)
+#mlp_fit = interpBPP(data=x,mesh=d,k=2).dot(theta)
+
+#import matplotlib.pyplot as plt
+#plt.plot(x,mlp_fit,'b-')
+#plt.plot(x,ns_fit,'k--')
+#plt.scatter(d,theta,c='r',s=30)
+#plt.vlines(d,min(theta)-eps,max(theta)+eps,alpha=0.5)
+#plt.show()
+
+
+
